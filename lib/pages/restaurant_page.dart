@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/menu_provider.dart';
+import '../services/menu_service.dart';
 import '../widgets/menu_card.dart';
- 
-class RestaurantScreen extends StatefulWidget {
-  const RestaurantScreen({Key? key}) : super(key: key);
- 
+
+class RestaurantPage extends StatefulWidget {
+  const RestaurantPage({Key? key}) : super(key: key);
+
   @override
-  State<RestaurantScreen> createState() => _RestaurantScreenState();
+  State<RestaurantPage> createState() => _RestaurantPageState();
 }
- 
-class _RestaurantScreenState extends State<RestaurantScreen> {
+
+class _RestaurantPageState extends State<RestaurantPage> {
   String? _selectedCategory;
   bool _showOnlyVegan = false;
- 
+
   @override
   void initState() {
     super.initState();
-    // Carica il menu quando la pagina viene aperta
-    Future.microtask(
-      () => context.read<MenuProvider>().fetchMenu(),
-    );
+    Future.microtask(() => context.read<MenuService>().fetchMenu());
   }
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,9 +30,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
         actions: [
           // Filtro Vegan
           IconButton(
-            icon: Icon(
-              _showOnlyVegan ? Icons.eco : Icons.eco_outlined,
-            ),
+            icon: Icon(_showOnlyVegan ? Icons.eco : Icons.eco_outlined),
             onPressed: () {
               setState(() {
                 _showOnlyVegan = !_showOnlyVegan;
@@ -45,12 +40,12 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
           ),
         ],
       ),
-      body: Consumer<MenuProvider>(
+      body: Consumer<MenuService>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
- 
+
           if (provider.errorMessage != null) {
             return Center(
               child: Column(
@@ -68,27 +63,25 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
               ),
             );
           }
- 
+
           if (provider.menuItems.isEmpty) {
-            return const Center(
-              child: Text('Nessun piatto disponibile'),
-            );
+            return const Center(child: Text('Nessun piatto disponibile'));
           }
- 
-          // Filtra i piatti in base alla categoria e vegan
+
           var filteredItems = provider.menuItems;
-          
+
           if (_selectedCategory != null) {
             filteredItems = provider.getItemsByCategory(_selectedCategory!);
           }
-          
+
           if (_showOnlyVegan) {
-            filteredItems = filteredItems.where((item) => item.isVegan).toList();
+            filteredItems = filteredItems
+                .where((item) => item.isVegan)
+                .toList();
           }
- 
+
           return Column(
             children: [
-              // Filtro categorie
               if (provider.categories.isNotEmpty)
                 Container(
                   height: 60,
@@ -108,7 +101,7 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
                     ],
                   ),
                 ),
-              
+
               // Lista piatti
               Expanded(
                 child: filteredItems.isEmpty
@@ -132,10 +125,10 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
       ),
     );
   }
- 
+
   Widget _buildCategoryChip(String label, String? category) {
     final isSelected = _selectedCategory == category;
-    
+
     return FilterChip(
       label: Text(label),
       selected: isSelected,
@@ -153,4 +146,3 @@ class _RestaurantScreenState extends State<RestaurantScreen> {
     );
   }
 }
- 
